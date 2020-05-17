@@ -11,7 +11,10 @@ class Movement extends Model
     protected $fillable=[
         'category_id','saving_account_id','month','date','description'
     ];
-    public function categories()
+    protected $hidden=[
+        'created_at','updated_at','user_id'
+    ];
+    public function category()
     {
         return $this->belongsTo(Category::class,'category_id');
     }
@@ -22,7 +25,7 @@ class Movement extends Model
     }
     public function scopeGetAll($query,$options)
     {
-        return $query->with('categories')->filter($options)
+        return $query->withCategory()->filter($options)
             ->orderBy('date','desc')->orderBy('id','desc');
     }
     public function scopeGetTotal($query,$options)
@@ -39,5 +42,24 @@ class Movement extends Model
             ->selectRaw('date')
             ->selectRaw('coalesce(sum( case when amount<0 then amount end),0) as expenses')
             ->selectRaw('coalesce(sum( case when amount>0 then amount end),0) as income');
+    }
+    public function scopeWithCategory($query)
+    {
+        return $query->with(['category'=>function($q){
+            $q->select('id','description','type');
+        }]);
+    }
+    public function getByCategories($options)
+    {
+        return static::join('categories as c','c.id','=','movements.category_id')
+            ->filter($options)
+            ->groupBy('movements.category_id')
+            ->groupBy('c.description')
+            ->groupBy('c.type')
+            ->selectRaw('movements.category_id,c.description as category,c.type')
+            ->selectRaw('coalesce(sum(amount),0) as amount')
+            ->orderBy('c.type','desc')
+            ->orderBy('amount','desc')
+            ->get();
     }
 }
