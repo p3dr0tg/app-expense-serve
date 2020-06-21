@@ -5,22 +5,38 @@ namespace App;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class Movement extends Model
 {
+
     protected $fillable=[
         'category_id','saving_account_id','month','date','description'
     ];
     protected $hidden=[
         'created_at','updated_at','user_id'
     ];
+    protected static function boot()
+    {
+        static::addGlobalScope('by_user',function(Builder $builder){
+            $builder->where('user_id',Auth::user()->id);
+        });
+        parent::boot();
+    }
     public function category()
     {
         return $this->belongsTo(Category::class,'category_id');
     }
+    public function scopeWithCategory($query)
+    {
+        return $query->with(['category'=>function($q){
+            $q->select('id','description','type');
+        }]);
+    }
     public function scopeFilter($query,$options)
     {
-        return $query->where('user_id',$options->user()->id)
+        return $query//->where('user_id',$options->user()->id)
             ->where('month',$options->month)->whereYear('date',$options->year);
     }
     public function scopeGetAll($query,$options)
@@ -43,12 +59,7 @@ class Movement extends Model
             ->selectRaw('coalesce(sum( case when amount<0 then amount end),0) as expenses')
             ->selectRaw('coalesce(sum( case when amount>0 then amount end),0) as income');
     }
-    public function scopeWithCategory($query)
-    {
-        return $query->with(['category'=>function($q){
-            $q->select('id','description','type');
-        }]);
-    }
+
     public function getByCategories($options)
     {
         return static::join('categories as c','c.id','=','movements.category_id')

@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Category;
 use App\Movement;
+use App\Services\ApiRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 class MovementController extends Controller
 {
     public function index(Request $request)
     {
-        $movements=Movement::getAll($request)->get();
+        $movements=(new ApiRepository($request));
+        $movements->of(Movement::getAll($request));
+        $movements=$movements->get();
         $total= Movement::getTotal($request)->first();
         return response()->json(['rows'=>$movements,'total'=>$total]);
     }
