@@ -25,6 +25,15 @@ class MovementController extends Controller
             'month'=>'required',
             'amount'=>'required',
             'date'=>'required|date',
+        ],[
+            'required' => 'El campo  :attribute es obligatorio',
+            'date'=>'El campo :attribute no  es fecha'
+        ],[
+            'category_id'=>'Categoria',
+            'saving_account_id'=>'Cuenta',
+            'month'=>'Mes',
+            'amount'=>'Monto',
+            'date'=>'Fecha'
         ]);
         return DB::transaction(function () use ($request){
             $amount=$request->amount;
@@ -61,12 +70,13 @@ class MovementController extends Controller
     public function categories(Request $request)
     {
         $result=(new Movement())->getByCategories($request);
+        $previousBalance=Movement::getPreviousBalance($request)->first();
         $totals=[
             'expenses'=>collect($result)->where('type','Egresos')->sum('amount'),
             'income'=>collect($result)->where('type','Ingresos')->sum('amount'),
             'balance'=>$result->sum('amount')
         ];
-        return response()->json(['rows'=>$result,'totals'=>$totals]);
+        return response()->json(['rows'=>$result,'totals'=>$totals,'previous_balance'=>$previousBalance]);
     }
 
 }

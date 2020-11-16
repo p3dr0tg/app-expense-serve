@@ -51,6 +51,14 @@ class Movement extends Model
                  ->where('user_id',$options->user()->id)
                 ->selectRaw("coalesce(sum(amount),0) as amount");
     }
+    public function scopeGetPreviousBalance($query,$options)
+    {
+        $month=($options->year*12)+$options->month;
+        $query->whereRaw('extract(year from date)*12+month<?',[$month])
+            ->where('user_id',$options->user()->id)
+            ->selectRaw("coalesce(sum(amount),0) as amount");
+        return $query;
+    }
     public function scopeGetSummary($query,$options)
     {
         return $query->filter($options)
