@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 
 class SavingAccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $saving_accounts=SavingAccount::get();
+        $saving_accounts=SavingAccount::select('id','description')
+            ->whereIn('user_id',[0,$request->user()->id])
+            ->orderBy('id','asc')->get();
         return response()->json($saving_accounts);
     }
     public function store(Request $request)
@@ -19,6 +21,7 @@ class SavingAccountController extends Controller
             'description'=>'required'
         ]);
         $obj=new SavingAccount();
+        $obj->user_id=$request->user()->id;
         $obj->fill($request->all());
         $obj->save();
         return response()->json($obj,201);

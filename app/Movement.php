@@ -37,7 +37,9 @@ class Movement extends Model
     public function scopeFilter($query,$options)
     {
         return $query//->where('user_id',$options->user()->id)
-            ->where('month',$options->month)->whereYear('date',$options->year);
+            ->where('saving_account_id',$options->saving_account_id)
+            ->where('month',$options->month)
+            ->whereYear('date',$options->year);
     }
     public function scopeGetAll($query,$options)
     {
@@ -47,8 +49,9 @@ class Movement extends Model
     public function scopeGetTotal($query,$options)
     {
         $month=($options->year*12)+$options->month;
-        $query->whereRaw('extract(year from date)*12+month<=?',[$month])
-                 ->where('user_id',$options->user()->id)
+        return $query->whereRaw('extract(year from date)*12+month<=?',[$month])
+                ->where('user_id',$options->user()->id)
+                ->where('saving_account_id',$options->saving_account_id)
                 ->selectRaw("coalesce(sum(amount),0) as amount");
     }
     public function scopeGetPreviousBalance($query,$options)
@@ -56,6 +59,7 @@ class Movement extends Model
         $month=($options->year*12)+$options->month;
         $query->whereRaw('extract(year from date)*12+month<?',[$month])
             ->where('user_id',$options->user()->id)
+            ->where('saving_account_id',$options->saving_account_id)
             ->selectRaw("coalesce(sum(amount),0) as amount");
         return $query;
     }
